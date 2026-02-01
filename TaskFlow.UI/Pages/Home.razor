@@ -1,4 +1,5 @@
-﻿@page "/"
+﻿@* D:\TaskFlow_net\TaskFlow.UI\Pages\Home.razor *@
+@page "/"
 @using TaskFlow.Shared.Entities
 @using TaskFlow.UI.Services
 @inject TaskService TaskService
@@ -83,7 +84,9 @@
                                                 @(task.Status?.Name ?? "Unknown")
                                             </span>
                                         </div>
-                                        <p class="mb-1">@(string.IsNullOrWhiteSpace(task.Description) ? "No description" : (task.Description.Length > 100 ? task.Description.Substring(0, 100) + "..." : task.Description))</p>
+                                        <p class="mb-1">@(string.IsNullOrWhiteSpace(task.Description) ? "No description" :
+                                                                            (task.Description.Length > 100 ? task.Description.Substring(0, 100) + "..." :
+                                                                            task.Description))</p>
                                         <small>Created: @task.CreatedAt.ToString("MM/dd/yyyy")</small>
                                     </a>
                                 }
@@ -143,22 +146,22 @@
     {
         isLoading = true;
         allTasks = await TaskService.GetTasksAsync();
-        
+
         if (allTasks != null)
         {
             totalTasks = allTasks.Count;
             inProgressTasks = allTasks.Count(t => t.StatusId == 2);
             reviewTasks = allTasks.Count(t => t.StatusId == 3);
             completedTasks = allTasks.Count(t => t.StatusId == 4);
-            
+
             totalTimeEntries = allTasks.Sum(t => t.TimeEntries?.Count ?? 0);
             tasksWithTime = allTasks.Count(t => t.TimeEntries != null && t.TimeEntries.Any());
-            
+
             var totalMinutes = allTasks
-                .Where(t => t.TimeEntries != null)
-                .SelectMany(t => t.TimeEntries!)
-                .Sum(e => e.Duration.TotalMinutes);
-            
+            .Where(t => t.TimeEntries != null)
+            .SelectMany(t => t.TimeEntries!)
+            .Sum(e => e.Duration.TotalMinutes);
+
             if (tasksWithTime > 0)
             {
                 var avgMinutes = totalMinutes / tasksWithTime;
@@ -166,12 +169,12 @@
                 var minutes = (int)(avgMinutes % 60);
                 averageTimePerTask = hours > 0 ? $"{hours}h {minutes}m" : $"{minutes}m";
             }
-            
+
             recentTasks = allTasks
-                .OrderByDescending(t => t.CreatedAt)
-                .ToList();
+            .OrderByDescending(t => t.CreatedAt)
+            .ToList();
         }
-        
+
         isLoading = false;
     }
 
