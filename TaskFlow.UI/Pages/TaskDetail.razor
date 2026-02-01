@@ -1,3 +1,4 @@
+@* TaskFlow.UI\Pages\TaskDetail.razor *@
 @page "/tasks/{Id:int}"
 @using TaskFlow.Shared.Entities
 @using TaskFlow.UI.Services
@@ -134,15 +135,18 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">Start Time *</label>
-                            <input type="datetime-local" class="form-control" value="@startTimeString" @onchange="@((ChangeEventArgs e) => startTimeString = e.Value?.ToString() ?? string.Empty)" />
+                            <input type="datetime-local" class="form-control" value="@startTimeString"
+                                @onchange="@((ChangeEventArgs e) => startTimeString = e.Value?.ToString() ?? string.Empty)" />
                         </div>
                         <div class="mb-3">
                             <label class="form-label">End Time *</label>
-                            <input type="datetime-local" class="form-control" value="@endTimeString" @onchange="@((ChangeEventArgs e) => endTimeString = e.Value?.ToString() ?? string.Empty)" />
+                            <input type="datetime-local" class="form-control" value="@endTimeString"
+                                @onchange="@((ChangeEventArgs e) => endTimeString = e.Value?.ToString() ?? string.Empty)" />
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Duration (auto-calculated)</label>
-                            <input type="text" class="form-control" value="@FormatDuration(newTimeEntry.EndTime - newTimeEntry.StartTime)" readonly />
+                            <input type="text" class="form-control"
+                                value="@FormatDuration(newTimeEntry.EndTime - newTimeEntry.StartTime)" readonly />
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -181,14 +185,14 @@
     {
         var startTime = DateTime.Now.AddHours(-1);
         var endTime = DateTime.Now;
-        
+
         newTimeEntry = new TimeEntry
         {
             TaskItemId = Id,
             StartTime = startTime,
             EndTime = endTime
         };
-        
+
         startTimeString = startTime.ToString("yyyy-MM-ddTHH:mm");
         endTimeString = endTime.ToString("yyyy-MM-ddTHH:mm");
         showTimeEntryModal = true;
@@ -202,8 +206,8 @@
 
     private async Task SaveTimeEntry()
     {
-        if (DateTime.TryParse(startTimeString, out var startTime) && 
-            DateTime.TryParse(endTimeString, out var endTime))
+        if (DateTime.TryParse(startTimeString, out var startTime) &&
+        DateTime.TryParse(endTimeString, out var endTime))
         {
             if (endTime <= startTime)
             {
@@ -214,7 +218,7 @@
             newTimeEntry.StartTime = startTime;
             newTimeEntry.EndTime = endTime;
             newTimeEntry.Duration = endTime - startTime;
-            
+
             if (await TimeEntryService.CreateTimeEntryAsync(newTimeEntry))
             {
                 await LoadTask();
@@ -273,7 +277,7 @@
         var total = task.TimeEntries.Sum(e => e.Duration.TotalMinutes);
         var hours = (int)(total / 60);
         var minutes = (int)(total % 60);
-        
+
         if (hours > 0)
             return $"{hours}h {minutes}m";
         return $"{minutes}m";

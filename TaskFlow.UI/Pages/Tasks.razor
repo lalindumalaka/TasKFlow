@@ -1,3 +1,4 @@
+@* TaskFlow.UI\Pages\Tasks.razor *@
 @page "/tasks"
 @using TaskFlow.Shared.Entities
 @using TaskFlow.UI.Services
@@ -42,7 +43,8 @@
                 </select>
             </div>
             <div class="col-md-8">
-                <input type="text" class="form-control" placeholder="Search tasks..." @bind="searchTerm" @oninput="FilterTasks" />
+                <input type="text" class="form-control" placeholder="Search tasks..." @bind="searchTerm"
+                    @oninput="FilterTasks" />
             </div>
         </div>
 
@@ -63,7 +65,8 @@
                     {
                         <tr>
                             <td><strong>@task.Title</strong></td>
-                            <td>@(task.Description.Length > 50 ? task.Description.Substring(0, 50) + "..." : task.Description)</td>
+                            <td>@(task.Description.Length > 50 ? task.Description.Substring(0, 50) + "..." : task.Description)
+                            </td>
                             <td>
                                 <span class="badge @GetStatusBadgeClass(task.Status?.Name ?? "")">
                                     @(task.Status?.Name ?? "Unknown")
@@ -72,7 +75,8 @@
                             <td>@task.CreatedAt.ToString("MM/dd/yyyy")</td>
                             <td>@task.TimeEntries.Count</td>
                             <td>
-                                <button class="btn btn-sm btn-info me-1" @onclick="() => ViewTask(task.Id)" title="View Details">
+                                <button class="btn btn-sm btn-info me-1" @onclick="() => ViewTask(task.Id)"
+                                    title="View Details">
                                     <span class="oi oi-eye"></span>
                                 </button>
                                 <button class="btn btn-sm btn-warning me-1" @onclick="() => EditTask(task)" title="Edit">
@@ -136,12 +140,12 @@
     private List<TaskItem>? tasks;
     private List<TaskItem> filteredTasks = new();
     private List<Status> statuses = new()
-    {
-        new Status { Id = 1, Name = "To Do" },
-        new Status { Id = 2, Name = "In Progress" },
-        new Status { Id = 3, Name = "Review" },
-        new Status { Id = 4, Name = "Completed" }
-    };
+{
+new Status { Id = 1, Name = "To Do" },
+new Status { Id = 2, Name = "In Progress" },
+new Status { Id = 3, Name = "Review" },
+new Status { Id = 4, Name = "Completed" }
+};
     private bool isLoading = true;
     private bool showModal = false;
     private TaskItem currentTask = new();
@@ -166,10 +170,10 @@
         if (tasks == null) return;
 
         filteredTasks = tasks.Where(t =>
-            (selectedStatusFilter == 0 || t.StatusId == selectedStatusFilter) &&
-            (string.IsNullOrWhiteSpace(searchTerm) || 
-             t.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-             t.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+        (selectedStatusFilter == 0 || t.StatusId == selectedStatusFilter) &&
+        (string.IsNullOrWhiteSpace(searchTerm) ||
+        t.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+        t.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
         ).ToList();
     }
 
