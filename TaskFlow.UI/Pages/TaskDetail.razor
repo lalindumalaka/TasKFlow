@@ -1,0 +1,286 @@
+@page "/tasks/{Id:int}"
+@using TaskFlow.Shared.Entities
+@using TaskFlow.UI.Services
+@inject TaskService TaskService
+@inject TimeEntryService TimeEntryService
+@inject NavigationManager Navigation
+
+<PageTitle>Task Details - TaskFlow Analytics</PageTitle>
+
+<div class="container mt-4">
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (task == null)
+    {
+        <div class="alert alert-danger">
+            <h4>Task not found</h4>
+            <p>The task you're looking for doesn't exist.</p>
+            <button class="btn btn-primary" @onclick="GoToTasks">Back to Tasks</button>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Task Details</h2>
+            <button class="btn btn-secondary" @onclick="GoToTasks">
+                <span class="oi oi-arrow-left"></span> Back to Tasks
+            </button>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>@task.Title</h4>
+                <span class="badge @GetStatusBadgeClass(task.Status?.Name ?? string.Empty)">
+                    @(task.Status?.Name ?? "Unknown")
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Description:</strong>
+                    <p>@(string.IsNullOrWhiteSpace(task.Description) ? "No description provided." : task.Description)</p>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Created:</strong> @task.CreatedAt.ToString("MMMM dd, yyyy 'at' HH:mm")
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Time Entries:</strong> @task.TimeEntries.Count
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-warning me-2" @onclick="EditTask">
+                    <span class="oi oi-pencil"></span> Edit Task
+                </button>
+                <button class="btn btn-danger" @onclick="DeleteTask">
+                    <span class="oi oi-trash"></span> Delete Task
+                </button>
+            </div>
+        </div>
+
+        <!-- Time Entries Section -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Time Entries</h5>
+                <button class="btn btn-sm btn-primary" @onclick="ShowAddTimeEntryModal">
+                    <span class="oi oi-plus"></span> Add Time Entry
+                </button>
+            </div>
+            <div class="card-body">
+                @if (task.TimeEntries == null || !task.TimeEntries.Any())
+                {
+                    <p class="text-muted">No time entries recorded for this task.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Start Time</th>
+                                    <th>End Time</th>
+                                    <th>Duration</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var entry in task.TimeEntries.OrderByDescending(e => e.StartTime))
+                                {
+                                    <tr>
+                                        <td>@entry.StartTime.ToString("MM/dd/yyyy HH:mm")</td>
+                                        <td>@entry.EndTime.ToString("MM/dd/yyyy HH:mm")</td>
+                                        <td>@FormatDuration(entry.Duration)</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteTimeEntry(entry.Id)">
+                                                <span class="oi oi-trash"></span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-info">
+                                    <td colspan="2"><strong>Total Time:</strong></td>
+                                    <td><strong>@FormatTotalDuration()</strong></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Add Time Entry Modal -->
+@if (showTimeEntryModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Time Entry</h5>
+                    <button type="button" class="btn-close" @onclick="CloseTimeEntryModal"></button>
+                </div>
+                <EditForm Model="newTimeEntry" OnValidSubmit="SaveTimeEntry">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Start Time *</label>
+                            <input type="datetime-local" class="form-control" value="@startTimeString" @onchange="@((ChangeEventArgs e) => startTimeString = e.Value?.ToString() ?? string.Empty)" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">End Time *</label>
+                            <input type="datetime-local" class="form-control" value="@endTimeString" @onchange="@((ChangeEventArgs e) => endTimeString = e.Value?.ToString() ?? string.Empty)" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Duration (auto-calculated)</label>
+                            <input type="text" class="form-control" value="@FormatDuration(newTimeEntry.EndTime - newTimeEntry.StartTime)" readonly />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseTimeEntryModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private TaskItem? task;
+    private bool isLoading = true;
+    private bool showTimeEntryModal = false;
+    private TimeEntry newTimeEntry = new();
+    private string startTimeString = string.Empty;
+    private string endTimeString = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTask();
+    }
+
+    private async Task LoadTask()
+    {
+        isLoading = true;
+        task = await TaskService.GetTaskAsync(Id);
+        isLoading = false;
+    }
+
+    private void ShowAddTimeEntryModal()
+    {
+        var startTime = DateTime.Now.AddHours(-1);
+        var endTime = DateTime.Now;
+        
+        newTimeEntry = new TimeEntry
+        {
+            TaskItemId = Id,
+            StartTime = startTime,
+            EndTime = endTime
+        };
+        
+        startTimeString = startTime.ToString("yyyy-MM-ddTHH:mm");
+        endTimeString = endTime.ToString("yyyy-MM-ddTHH:mm");
+        showTimeEntryModal = true;
+    }
+
+    private void CloseTimeEntryModal()
+    {
+        showTimeEntryModal = false;
+        newTimeEntry = new TimeEntry();
+    }
+
+    private async Task SaveTimeEntry()
+    {
+        if (DateTime.TryParse(startTimeString, out var startTime) && 
+            DateTime.TryParse(endTimeString, out var endTime))
+        {
+            if (endTime <= startTime)
+            {
+                // Show error - end time must be after start time
+                return;
+            }
+
+            newTimeEntry.StartTime = startTime;
+            newTimeEntry.EndTime = endTime;
+            newTimeEntry.Duration = endTime - startTime;
+            
+            if (await TimeEntryService.CreateTimeEntryAsync(newTimeEntry))
+            {
+                await LoadTask();
+                CloseTimeEntryModal();
+            }
+        }
+    }
+
+    private async Task DeleteTimeEntry(int entryId)
+    {
+        if (await TimeEntryService.DeleteTimeEntryAsync(entryId))
+        {
+            await LoadTask();
+        }
+    }
+
+    private void EditTask()
+    {
+        Navigation.NavigateTo($"/tasks/edit/{Id}");
+    }
+
+    private async Task DeleteTask()
+    {
+        if (await TaskService.DeleteTaskAsync(Id))
+        {
+            Navigation.NavigateTo("/tasks");
+        }
+    }
+
+    private string GetStatusBadgeClass(string statusName)
+    {
+        return statusName switch
+        {
+            "To Do" => "bg-secondary",
+            "In Progress" => "bg-primary",
+            "Review" => "bg-warning",
+            "Completed" => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string FormatDuration(TimeSpan duration)
+    {
+        if (duration.TotalHours >= 1)
+        {
+            return $"{(int)duration.TotalHours}h {duration.Minutes}m";
+        }
+        return $"{duration.Minutes}m";
+    }
+
+    private string FormatTotalDuration()
+    {
+        if (task?.TimeEntries == null || !task.TimeEntries.Any())
+            return "0m";
+
+        var total = task.TimeEntries.Sum(e => e.Duration.TotalMinutes);
+        var hours = (int)(total / 60);
+        var minutes = (int)(total % 60);
+        
+        if (hours > 0)
+            return $"{hours}h {minutes}m";
+        return $"{minutes}m";
+    }
+
+    private void GoToTasks()
+    {
+        Navigation.NavigateTo("/tasks");
+    }
+}

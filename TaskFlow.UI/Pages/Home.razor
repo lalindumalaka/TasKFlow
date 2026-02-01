@@ -1,0 +1,189 @@
+﻿@page "/"
+@using TaskFlow.Shared.Entities
+@using TaskFlow.UI.Services
+@inject TaskService TaskService
+@inject NavigationManager Navigation
+
+<PageTitle>Home - TaskFlow Analytics</PageTitle>
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>TaskFlow Analytics</h1>
+            <p class="lead">Track your tasks and time spent efficiently</p>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Tasks</h5>
+                        <h2>@totalTasks</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">In Progress</h5>
+                        <h2>@inProgressTasks</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">In Review</h5>
+                        <h2>@reviewTasks</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Completed</h5>
+                        <h2>@completedTasks</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Recent Tasks</h5>
+                        <a href="/tasks" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        @if (recentTasks == null || !recentTasks.Any())
+                        {
+                            <p class="text-muted">No tasks yet. <a href="/tasks">Create your first task!</a></p>
+                        }
+                        else
+                        {
+                            <div class="list-group">
+                                @foreach (var task in recentTasks.Take(5))
+                                {
+                                    <a href="/tasks/@task.Id" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">@task.Title</h6>
+                                            <span class="badge @GetStatusBadgeClass(task.Status?.Name ?? "")">
+                                                @(task.Status?.Name ?? "Unknown")
+                                            </span>
+                                        </div>
+                                        <p class="mb-1">@(string.IsNullOrWhiteSpace(task.Description) ? "No description" : (task.Description.Length > 100 ? task.Description.Substring(0, 100) + "..." : task.Description))</p>
+                                        <small>Created: @task.CreatedAt.ToString("MM/dd/yyyy")</small>
+                                    </a>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <a href="/tasks" class="btn btn-primary w-100 mb-2">
+                            <span class="oi oi-plus"></span> Create New Task
+                        </a>
+                        <a href="/tasks" class="btn btn-outline-primary w-100">
+                            <span class="oi oi-list"></span> View All Tasks
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Total Time Entries:</strong> @totalTimeEntries</p>
+                        <p><strong>Tasks with Time:</strong> @tasksWithTime</p>
+                        <p><strong>Average Time per Task:</strong> @averageTimePerTask</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<TaskItem>? allTasks;
+    private List<TaskItem> recentTasks = new();
+    private bool isLoading = true;
+    private int totalTasks = 0;
+    private int inProgressTasks = 0;
+    private int reviewTasks = 0;
+    private int completedTasks = 0;
+    private int totalTimeEntries = 0;
+    private int tasksWithTime = 0;
+    private string averageTimePerTask = "0m";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        isLoading = true;
+        allTasks = await TaskService.GetTasksAsync();
+        
+        if (allTasks != null)
+        {
+            totalTasks = allTasks.Count;
+            inProgressTasks = allTasks.Count(t => t.StatusId == 2);
+            reviewTasks = allTasks.Count(t => t.StatusId == 3);
+            completedTasks = allTasks.Count(t => t.StatusId == 4);
+            
+            totalTimeEntries = allTasks.Sum(t => t.TimeEntries?.Count ?? 0);
+            tasksWithTime = allTasks.Count(t => t.TimeEntries != null && t.TimeEntries.Any());
+            
+            var totalMinutes = allTasks
+                .Where(t => t.TimeEntries != null)
+                .SelectMany(t => t.TimeEntries!)
+                .Sum(e => e.Duration.TotalMinutes);
+            
+            if (tasksWithTime > 0)
+            {
+                var avgMinutes = totalMinutes / tasksWithTime;
+                var hours = (int)(avgMinutes / 60);
+                var minutes = (int)(avgMinutes % 60);
+                averageTimePerTask = hours > 0 ? $"{hours}h {minutes}m" : $"{minutes}m";
+            }
+            
+            recentTasks = allTasks
+                .OrderByDescending(t => t.CreatedAt)
+                .ToList();
+        }
+        
+        isLoading = false;
+    }
+
+    private string GetStatusBadgeClass(string statusName)
+    {
+        return statusName switch
+        {
+            "To Do" => "bg-secondary",
+            "In Progress" => "bg-primary",
+            "Review" => "bg-warning",
+            "Completed" => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+}

@@ -1,0 +1,252 @@
+@page "/tasks"
+@using TaskFlow.Shared.Entities
+@using TaskFlow.UI.Services
+@inject TaskService TaskService
+@inject NavigationManager Navigation
+
+<PageTitle>Tasks - TaskFlow Analytics</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Tasks</h2>
+        <button class="btn btn-primary" @onclick="ShowCreateModal">
+            <span class="oi oi-plus"></span> New Task
+        </button>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (tasks == null || !tasks.Any())
+    {
+        <div class="alert alert-info">
+            <h4>No tasks found</h4>
+            <p>Get started by creating your first task!</p>
+        </div>
+    }
+    else
+    {
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <select class="form-select" @bind="selectedStatusFilter" @bind:after="FilterTasks">
+                    <option value="">All Statuses</option>
+                    @foreach (var status in statuses)
+                    {
+                        <option value="@status.Id">@status.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-8">
+                <input type="text" class="form-control" placeholder="Search tasks..." @bind="searchTerm" @oninput="FilterTasks" />
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Time Entries</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var task in filteredTasks)
+                    {
+                        <tr>
+                            <td><strong>@task.Title</strong></td>
+                            <td>@(task.Description.Length > 50 ? task.Description.Substring(0, 50) + "..." : task.Description)</td>
+                            <td>
+                                <span class="badge @GetStatusBadgeClass(task.Status?.Name ?? "")">
+                                    @(task.Status?.Name ?? "Unknown")
+                                </span>
+                            </td>
+                            <td>@task.CreatedAt.ToString("MM/dd/yyyy")</td>
+                            <td>@task.TimeEntries.Count</td>
+                            <td>
+                                <button class="btn btn-sm btn-info me-1" @onclick="() => ViewTask(task.Id)" title="View Details">
+                                    <span class="oi oi-eye"></span>
+                                </button>
+                                <button class="btn btn-sm btn-warning me-1" @onclick="() => EditTask(task)" title="Edit">
+                                    <span class="oi oi-pencil"></span>
+                                </button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => DeleteTask(task.Id)" title="Delete">
+                                    <span class="oi oi-trash"></span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Create/Edit Modal -->
+@if (showModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(currentTask.Id == 0 ? "Create Task" : "Edit Task")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <EditForm Model="currentTask" OnValidSubmit="SaveTask">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Title *</label>
+                            <InputText class="form-control" @bind-Value="currentTask.Title" />
+                            <ValidationMessage For="@(() => currentTask.Title)" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <InputTextArea class="form-control" rows="3" @bind-Value="currentTask.Description" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status *</label>
+                            <InputSelect class="form-select" @bind-Value="currentTask.StatusId">
+                                @foreach (var status in statuses)
+                                {
+                                    <option value="@status.Id">@status.Name</option>
+                                }
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<TaskItem>? tasks;
+    private List<TaskItem> filteredTasks = new();
+    private List<Status> statuses = new()
+    {
+        new Status { Id = 1, Name = "To Do" },
+        new Status { Id = 2, Name = "In Progress" },
+        new Status { Id = 3, Name = "Review" },
+        new Status { Id = 4, Name = "Completed" }
+    };
+    private bool isLoading = true;
+    private bool showModal = false;
+    private TaskItem currentTask = new();
+    private int selectedStatusFilter = 0;
+    private string searchTerm = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTasks();
+    }
+
+    private async Task LoadTasks()
+    {
+        isLoading = true;
+        tasks = await TaskService.GetTasksAsync();
+        filteredTasks = tasks.ToList();
+        isLoading = false;
+    }
+
+    private void FilterTasks()
+    {
+        if (tasks == null) return;
+
+        filteredTasks = tasks.Where(t =>
+            (selectedStatusFilter == 0 || t.StatusId == selectedStatusFilter) &&
+            (string.IsNullOrWhiteSpace(searchTerm) || 
+             t.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             t.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+        ).ToList();
+    }
+
+    private void ShowCreateModal()
+    {
+        currentTask = new TaskItem
+        {
+            Id = 0,
+            StatusId = 1, // Default to "To Do"
+            CreatedAt = DateTime.UtcNow
+        };
+        showModal = true;
+    }
+
+    private void EditTask(TaskItem task)
+    {
+        currentTask = new TaskItem
+        {
+            Id = task.Id,
+            Title = task.Title,
+            Description = task.Description,
+            StatusId = task.StatusId,
+            CreatedAt = task.CreatedAt
+        };
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        currentTask = new TaskItem();
+    }
+
+    private async Task SaveTask()
+    {
+        if (currentTask.Id == 0)
+        {
+            var created = await TaskService.CreateTaskAsync(currentTask);
+            if (created != null)
+            {
+                await LoadTasks();
+                CloseModal();
+            }
+        }
+        else
+        {
+            var success = await TaskService.UpdateTaskAsync(currentTask);
+            if (success)
+            {
+                await LoadTasks();
+                CloseModal();
+            }
+        }
+    }
+
+    private async Task DeleteTask(int id)
+    {
+        if (await TaskService.DeleteTaskAsync(id))
+        {
+            await LoadTasks();
+        }
+    }
+
+    private void ViewTask(int id)
+    {
+        Navigation.NavigateTo($"/tasks/{id}");
+    }
+
+    private string GetStatusBadgeClass(string statusName)
+    {
+        return statusName switch
+        {
+            "To Do" => "bg-secondary",
+            "In Progress" => "bg-primary",
+            "Review" => "bg-warning",
+            "Completed" => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+}

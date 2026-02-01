@@ -1,0 +1,17 @@
+D:\TaskFlow_net\TaskFlow.Data\bin\Debug\net9.0\TaskFlow.Data.deps.json
+D:\TaskFlow_net\TaskFlow.Data\bin\Debug\net9.0\TaskFlow.Data.runtimeconfig.json
+D:\TaskFlow_net\TaskFlow.Data\bin\Debug\net9.0\TaskFlow.Data.dll
+D:\TaskFlow_net\TaskFlow.Data\bin\Debug\net9.0\TaskFlow.Data.pdb
+D:\TaskFlow_net\TaskFlow.Data\bin\Debug\net9.0\TaskFlow.Shared.dll
+D:\TaskFlow_net\TaskFlow.Data\bin\Debug\net9.0\TaskFlow.Shared.pdb
+D:\TaskFlow_net\TaskFlow.Data\obj\Debug\net9.0\TaskFlow.Data.csproj.AssemblyReference.cache
+D:\TaskFlow_net\TaskFlow.Data\obj\Debug\net9.0\TaskFlow.Data.GeneratedMSBuildEditorConfig.editorconfig
+D:\TaskFlow_net\TaskFlow.Data\obj\Debug\net9.0\TaskFlow.Data.AssemblyInfoInputs.cache
+D:\TaskFlow_net\TaskFlow.Data\obj\Debug\net9.0\TaskFlow.Data.AssemblyInfo.cs
+D:\TaskFlow_net\TaskFlow.Data\obj\Debug\net9.0\TaskFlow.Data.csproj.CoreCompileInputs.cache
+D:\TaskFlow_net\TaskFlow.Data\obj\Debug\net9.0\TaskFlow.1EE62009.Up2Date
+D:\TaskFlow_net\TaskFlow.Data\obj\Debug\net9.0\TaskFlow.Data.dll
+D:\TaskFlow_net\TaskFlow.Data\obj\Debug\net9.0\refint\TaskFlow.Data.dll
+D:\TaskFlow_net\TaskFlow.Data\obj\Debug\net9.0\TaskFlow.Data.pdb
+D:\TaskFlow_net\TaskFlow.Data\obj\Debug\net9.0\TaskFlow.Data.genruntimeconfig.cache
+D:\TaskFlow_net\TaskFlow.Data\obj\Debug\net9.0\ref\TaskFlow.Data.dll

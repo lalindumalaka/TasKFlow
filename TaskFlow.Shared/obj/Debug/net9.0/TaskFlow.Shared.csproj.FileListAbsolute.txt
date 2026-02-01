@@ -1,0 +1,11 @@
+D:\TaskFlow_net\TaskFlow.Shared\bin\Debug\net9.0\TaskFlow.Shared.deps.json
+D:\TaskFlow_net\TaskFlow.Shared\bin\Debug\net9.0\TaskFlow.Shared.dll
+D:\TaskFlow_net\TaskFlow.Shared\bin\Debug\net9.0\TaskFlow.Shared.pdb
+D:\TaskFlow_net\TaskFlow.Shared\obj\Debug\net9.0\TaskFlow.Shared.GeneratedMSBuildEditorConfig.editorconfig
+D:\TaskFlow_net\TaskFlow.Shared\obj\Debug\net9.0\TaskFlow.Shared.AssemblyInfoInputs.cache
+D:\TaskFlow_net\TaskFlow.Shared\obj\Debug\net9.0\TaskFlow.Shared.AssemblyInfo.cs
+D:\TaskFlow_net\TaskFlow.Shared\obj\Debug\net9.0\TaskFlow.Shared.csproj.CoreCompileInputs.cache
+D:\TaskFlow_net\TaskFlow.Shared\obj\Debug\net9.0\TaskFlow.Shared.dll
+D:\TaskFlow_net\TaskFlow.Shared\obj\Debug\net9.0\refint\TaskFlow.Shared.dll
+D:\TaskFlow_net\TaskFlow.Shared\obj\Debug\net9.0\TaskFlow.Shared.pdb
+D:\TaskFlow_net\TaskFlow.Shared\obj\Debug\net9.0\ref\TaskFlow.Shared.dll
