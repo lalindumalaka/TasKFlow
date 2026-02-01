@@ -7,7 +7,7 @@ A sleek **Blazor WebAssembly + EF Core** task performance tracker. This project 
 ### 🛠️ Tech Stack
 * **UI:** Blazor WebAssembly (.NET 9)
 * **API:** ASP.NET Core Web API
-* **Data:** EF Core (PostgreSQL / SQL Server)
+* **Data:** EF Core (PostgreSQL)
 * **DevOps:** GitHub Actions & Multi-stage Docker
 
 ---
