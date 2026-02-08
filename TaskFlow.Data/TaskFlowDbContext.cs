@@ -1,3 +1,5 @@
+//TaskFlow_net\TaskFlow.Data\TaskFlowDbContext.cs
+
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Shared.Entities;
 
@@ -18,7 +20,7 @@ public class TaskFlowDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure TaskItem entity
+
         modelBuilder.Entity<TaskItem>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -29,14 +31,13 @@ public class TaskFlowDbContext : DbContext
                 .HasMaxLength(1000);
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
-            
+
             entity.HasOne(e => e.Status)
                 .WithMany(s => s.TaskItems)
                 .HasForeignKey(e => e.StatusId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Configure TimeEntry entity
         modelBuilder.Entity<TimeEntry>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -46,26 +47,26 @@ public class TaskFlowDbContext : DbContext
                 .IsRequired();
             entity.Property(e => e.Duration)
                 .IsRequired();
-            
+
             entity.HasOne(e => e.TaskItem)
                 .WithMany(t => t.TimeEntries)
                 .HasForeignKey(e => e.TaskItemId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Configure Status entity
+        
         modelBuilder.Entity<Status>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name)
                 .IsRequired()
                 .HasMaxLength(50);
-            
+
             entity.HasIndex(e => e.Name)
                 .IsUnique();
         });
 
-        // Seed Status data
+        
         modelBuilder.Entity<Status>().HasData(
             new Status { Id = 1, Name = "To Do" },
             new Status { Id = 2, Name = "In Progress" },
